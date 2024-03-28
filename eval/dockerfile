@@ -1,0 +1,45 @@
+FROM python:3.9-slim
+
+# Installation des dépendances nécessaires
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        wget \
+        unzip \
+        chromium \
+        libglib2.0-0 \
+        libnss3 \
+        libgconf-2-4 \
+        libfontconfig1 \
+        libxrender1 \
+        libxcomposite1 \
+        libatk1.0-0 \
+        libgtk-3-0 \
+        xvfb \
+        default-libmysqlclient-dev \
+        gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Téléchargement du WebDriver Chrome
+RUN wget -q -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/98.0.4758.102/chromedriver_linux64.zip \
+    && unzip -q /tmp/chromedriver.zip -d /usr/local/bin/ \
+    && rm /tmp/chromedriver.zip \
+    && chmod +x /usr/local/bin/chromedriver
+
+# Définition des variables d'environnement pour Chromium
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROME_PATH=/usr/lib/chromium/
+
+# Création du répertoire de travail
+WORKDIR /app
+
+# Copie des fichiers de l'application dans le conteneur
+COPY requirements.txt .
+
+# Installation des dépendances Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copie du reste des fichiers de l'application dans le conteneur
+COPY . .
+
+# Commande par défaut pour exécuter l'application
+CMD ["python", "eval.py"]
